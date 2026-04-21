@@ -739,7 +739,7 @@ void MainWindow::onShowFlowchart() {
 
 
 
-
+void MainWindow::onShowEquations() {
     auto* dlg = new QDialog(this);
     dlg->setAttribute(Qt::WA_DeleteOnClose);
     dlg->setWindowTitle("IAEA Standard Equations Reference");

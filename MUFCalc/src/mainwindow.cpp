@@ -16,7 +16,6 @@
 #include <QLabel>
 #include <QPixmap>
 #include <QDesktopServices>
-#include <QWebEngineView>
 #include <QStandardPaths>
 #include <QFile>
 #include <QUrl>
@@ -716,26 +715,26 @@ void MainWindow::onHistoryClicked(QListWidgetItem* item) {
     m_stack->setCurrentIndex(1);
     ResultsPanel panel(inp, res, this);
     panel.exec();
-}
 void MainWindow::onShowFlowchart() {
-    auto* dlg = new QDialog(this);
-    dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->setWindowTitle("Process Workflow Flowchart");
-    dlg->setMinimumSize(1000, 750);
-    auto* lay = new QVBoxLayout(dlg);
-    lay->setContentsMargins(0,0,0,0);
-    auto* view = new QWebEngineView(dlg);
-    QString html;
-    QFile f(":/MUFCalc_Flowchart.html");
-    if (f.open(QIODevice::ReadOnly)) { html = QString::fromUtf8(f.readAll()); f.close(); }
-    view->setHtml(html);
-    lay->addWidget(view);
-    auto* cb = new QPushButton("Close"); cb->setStyleSheet(Styles::primaryButtonStyle());
-    connect(cb, &QPushButton::clicked, dlg, &QDialog::accept);
-    auto* br = new QHBoxLayout(); br->addStretch(); br->addWidget(cb);
-    lay->addLayout(br);
-    dlg->exec();
+    QString htmlPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/MUFCalc_Flowchart.html";
+    QFile res(":/MUFCalc_Flowchart.html");
+    if (res.open(QIODevice::ReadOnly)) {
+        QFile out(htmlPath);
+        if (out.open(QIODevice::WriteOnly)) { out.write(res.readAll()); out.close(); }
+        res.close();
+    }
+    QDesktopServices::openUrl(QUrl::fromLocalFile(htmlPath));
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -846,5 +845,6 @@ void MainWindow::setStatus(const QString& msg, const QString& color) {
         QString("color:%1;font-size:11px;"
                 "font-family:'Courier New',monospace;").arg(color));
 }
+
 
 

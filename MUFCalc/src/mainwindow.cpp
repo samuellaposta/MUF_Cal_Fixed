@@ -15,6 +15,10 @@
 #include <QFrame>
 #include <QLabel>
 #include <QPixmap>
+#include <QDesktopServices>
+#include <QStandardPaths>
+#include <QFile>
+#include <QUrl>
 #include <QScrollArea>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -713,29 +717,29 @@ void MainWindow::onHistoryClicked(QListWidgetItem* item) {
     panel.exec();
 }
 void MainWindow::onShowFlowchart() {
-    auto* dlg = new QDialog(this);
-    dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->setWindowTitle("Process Workflow Flowchart");
-    dlg->setMinimumSize(900, 700);
-    dlg->setStyleSheet(Styles::appStyle());
-    auto* lay = new QVBoxLayout(dlg); lay->setContentsMargins(20,20,20,20);
-    auto* t = new QLabel("IAEA MUF Calculation Process Flowchart");
-    t->setStyleSheet("color:#1a3a5c;font-size:13px;font-weight:900;margin-bottom:8px;");
-    lay->addWidget(t);
-    QPixmap fc(":/flowchart.png");
-    if (!fc.isNull()) {
-        auto* l = new QLabel(); l->setPixmap(fc.scaledToWidth(860, Qt::SmoothTransformation));
-        l->setAlignment(Qt::AlignCenter);
-        auto* s = new QScrollArea(); s->setWidget(l);
-        s->setWidgetResizable(true); s->setFrameShape(QFrame::NoFrame);
-        lay->addWidget(s);
+    QString htmlPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/MUFCalc_Flowchart.html";
+    QFile res(":/MUFCalc_Flowchart.html");
+    if (res.open(QIODevice::ReadOnly)) {
+        QFile out(htmlPath);
+        if (out.open(QIODevice::WriteOnly)) { out.write(res.readAll()); out.close(); }
+        res.close();
     }
-    auto* cb = new QPushButton("Close"); cb->setStyleSheet(Styles::primaryButtonStyle());
-    connect(cb, &QPushButton::clicked, dlg, &QDialog::accept);
-    auto* br = new QHBoxLayout(); br->addStretch(); br->addWidget(cb);
-    lay->addLayout(br); dlg->exec();
+    QDesktopServices::openUrl(QUrl::fromLocalFile(htmlPath));
 }
-void MainWindow::onShowEquations() {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     auto* dlg = new QDialog(this);
     dlg->setAttribute(Qt::WA_DeleteOnClose);
     dlg->setWindowTitle("IAEA Standard Equations Reference");
@@ -841,3 +845,4 @@ void MainWindow::setStatus(const QString& msg, const QString& color) {
         QString("color:%1;font-size:11px;"
                 "font-family:'Courier New',monospace;").arg(color));
 }
+

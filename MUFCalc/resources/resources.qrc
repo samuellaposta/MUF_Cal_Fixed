@@ -2,6 +2,8 @@
     <qresource prefix="/">
         <file>tpu_logo.png</file>
         <file>flowchart.png</file>
+        <file>MUFCalc_Flowchart.html</file>
         <file>equations_diagram.png</file>
     </qresource>
 </RCC>
+

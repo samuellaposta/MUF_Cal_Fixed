@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MUF Calculator — System Architecture & Data Flow</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f4f3ef; color: #2c2c2a; }
+  header { background: #0C447C; color: white; padding: 14px 24px; }
+  header h1 { font-size: 16px; font-weight: 600; margin-bottom: 3px; }
+  header p { font-size: 11px; opacity: 0.75; }
+  .layout { display: flex; gap: 0; min-height: calc(100vh - 60px); }
+  .diagram-wrap { flex: 1; padding: 24px; overflow-x: auto; }
+  .sidebar { width: 300px; min-width: 300px; background: #fff; border-left: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .info-card { background: #f4f3ef; border-radius: 10px; padding: 16px; border: 1px solid #ddd; }
+  .info-card h2 { font-size: 13px; font-weight: 600; color: #0C447C; margin-bottom: 8px; }
+  .info-card p { font-size: 12px; line-height: 1.7; color: #444; }
+  .info-ref { margin-top: 10px; font-size: 11px; color: #888; font-style: italic; border-top: 1px solid #ddd; padding-top: 8px; }
+  .hint { font-size: 11px; color: #999; text-align: center; padding: 8px; }
+  .legend { display: flex; flex-direction: column; gap: 6px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #555; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; border: 1px solid; }
+  footer { background: #e8e6e0; text-align: center; font-size: 10px; color: #888; padding: 8px; border-top: 1px solid #ddd; }
+
+  .node { cursor: pointer; transition: opacity 0.15s; }
+  .node:hover { opacity: 0.82; }
+  .node.active rect, .node.active ellipse { stroke-width: 2.5 !important; }
+
+  @media (max-width: 700px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; min-width: unset; border-left: none; border-top: 1px solid #ddd; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>MUF Calculator — System Architecture &amp; Data Flow</h1>
+  <p>MUFCalc v1.0 &nbsp;·&nbsp; IAEA INFCIRC/153 Compliant &nbsp;·&nbsp; Tomsk Polytechnic University &nbsp;·&nbsp; School of Nuclear Science and Engineering</p>
+</header>
+
+<div class="layout">
+  <div class="diagram-wrap">
+    <svg id="chart" width="100%" viewBox="0 0 620 780" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- Input data -->
+      <g class="node" id="n-input" onclick="show('n-input','Input data','Accepts six measurement parameters per material balance period: opening inventory (OI), receipts (R), shipments (S), disposals (D), physical inventory (PI), and their associated measurement uncertainties (ε). These are the raw numbers entered by the operator or inspector before any calculation begins.','IAEA INFCIRC/153 §72 — MBA inventory data requirements')">
+        <rect x="185" y="20" width="250" height="50" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.8"/>
+        <text x="310" y="41" text-anchor="middle" font-family="inherit" font-size="13" font-weight="600" fill="#0C447C">Input data</text>
+        <text x="310" y="58" text-anchor="middle" font-family="inherit" font-size="10.5" fill="#185FA5">OI, R, S, D, PI + measurement uncertainties (ε)</text>
+      </g>
+
+      <!-- Arrow 1 -->
+      <g class="node" id="n-arr1" onclick="show('n-arr1','Data flow: input → validator','Raw measurement data passes into the validation layer. No arithmetic happens here — the system first checks that every value is physically plausible before touching the MUF formula.','GUM JCGM 100:2008 §3 — input quantities must be defined before uncertainty propagation')">
+        <line x1="310" y1="70" x2="310" y2="100" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+        <rect x="270" y="72" width="80" height="26" fill="transparent"/>
+      </g>
+
+      <!-- Input validator -->
+      <g class="node" id="n-valid" onclick="show('n-valid','Input validator','Runs 18 physical-consistency checks before any arithmetic. Checks include: non-negative inventory values, measurement uncertainties within physical bounds, material type consistency, date range validity, and IAEA significant quantity thresholds. If any check fails the calculation is blocked and a specific error message is returned.','IAEA STR-368 §4.2 — data quality requirements for nuclear material accountancy')">
+        <rect x="170" y="100" width="280" height="50" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+        <text x="310" y="121" text-anchor="middle" font-family="inherit" font-size="13" font-weight="600" fill="#085041">Input validator</text>
+        <text x="310" y="138" text-anchor="middle" font-family="inherit" font-size="10.5" fill="#0F6E56">18 physical-consistency checks before any arithmetic</text>
+      </g>
+
+      <!-- Error branch arrow -->
+      <g class="node" id="n-errarr" onclick="show('n-errarr','Failure path: validation error','The dashed red line is only triggered when one or more checks fail. This is a hard stop — no MUF value is computed until the data passes all 18 checks. The solid line below only continues on success.','Defensive computation principle — invalid inputs must never produce a silent wrong answer')">
+        <line x1="450" y1="125" x2="490" y2="125" stroke="#E24B4A" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+        <rect x="450" y="112" width="40" height="26" fill="transparent"/>
+      </g>
+
+      <!-- Validation error box -->
+      <g class="node" id="n-err" onclick="show('n-err','Validation error — blocks calculation','When any of the 18 checks fails the system returns a structured error describing which check failed and why. The MUF calculation does not proceed. This prevents nonsensical results from bad inputs — a core safeguards integrity requirement.','IAEA INFCIRC/153 §72(b) — data must be verified before use in accountancy')">
+        <rect x="490" y="100" width="120" height="50" rx="8" fill="#FCEBEB" stroke="#A32D2D" stroke-width="0.8"/>
+        <text x="550" y="121" text-anchor="middle" font-family="inherit" font-size="12" font-weight="600" fill="#791F1F">Validation error</text>
+        <text x="550" y="138" text-anchor="middle" font-family="inherit" font-size="10" fill="#A32D2D">Blocks calculation</text>
+      </g>
+
+      <!-- Arrow 2 -->
+      <g class="node" id="n-arr2" onclick="show('n-arr2','Data flow: validator → transaction handler','Validated inputs pass here as a clean data object. All 18 checks have passed and values are guaranteed physically consistent. The transaction handler receives them and begins aggregating entries across the material balance period.','NMA Handbook 2008 §3.1 — aggregation of transaction data across MBA')">
+        <line x1="310" y1="150" x2="310" y2="180" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+        <rect x="270" y="152" width="80" height="26" fill="transparent"/>
+      </g>
+
+      <!-- Transaction handler -->
+      <g class="node" id="n-tx" onclick="show('n-tx','Transaction handler','Aggregates all receipts, shipments, and inventory entries across the full material balance period (MBP). Computes the net transfer term ΣInputs − ΣOutputs used in the MUF equation. Multiple transaction records are collapsed into a single set of totals ready for the MUF and uncertainty engines.','IAEA INFCIRC/153 §72 — MUF = BI + ΣInputs − ΣOutputs − EI')">
+        <rect x="170" y="180" width="280" height="50" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+        <text x="310" y="201" text-anchor="middle" font-family="inherit" font-size="13" font-weight="600" fill="#085041">Transaction handler</text>
+        <text x="310" y="218" text-anchor="middle" font-family="inherit" font-size="10.5" fill="#0F6E56">Aggregates transaction entries across the MBP</text>
+      </g>
+
+      <!-- Split lines -->
+      <g class="node" id="n-split" onclick="show('n-split','Pipeline split: dual engines','After aggregation the pipeline forks. The same transaction totals feed both the MUF calculator (left) and the uncertainty engine (right) in parallel. Both engines need the same inputs — splitting here avoids recomputation and keeps results consistent.','GUM §4 — uncertainty must be propagated from the same input quantities as the measurand')">
+        <line x1="310" y1="230" x2="310" y2="255" stroke="#888" stroke-width="1.5"/>
+        <line x1="170" y1="255" x2="450" y2="255" stroke="#888" stroke-width="1.5"/>
+        <line x1="170" y1="255" x2="170" y2="275" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="450" y1="255" x2="450" y2="275" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+        <rect x="240" y="232" width="140" height="40" fill="transparent"/>
+      </g>
+
+      <!-- MUF calculator -->
+      <g class="node" id="n-muf" onclick="show('n-muf','MUF calculator','Applies the IAEA material balance equation: MUF = BI + ΣInputs − ΣOutputs − EI, where BI is beginning inventory and EI is ending physical inventory. The result is a signed quantity — positive MUF suggests unexplained material loss, negative suggests unexplained gain. Both are safeguards concerns requiring follow-up.','IAEA INFCIRC/153 §72 — the MUF formula and its interpretation')">
+        <rect x="60" y="275" width="220" height="50" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+        <text x="170" y="296" text-anchor="middle" font-family="inherit" font-size="13" font-weight="600" fill="#3C3489">MUF calculator</text>
+        <text x="170" y="313" text-anchor="middle" font-family="inherit" font-size="10.5" fill="#534AB7">MUF = BI + ΣIn − ΣOut − EI</text>
+      </g>
+
+      <!-- Uncertainty engine -->
+      <g class="node" id="n-unc" onclick="show('n-unc','Uncertainty engine','Propagates measurement uncertainties through the MUF formula using quadrature summation (GUM methodology): σ(MUF) = √[σ²(BI) + σ²(ΣIn) + σ²(ΣOut)]. The result LEMUF is the 1σ limit of error on MUF. It also computes Cᵢ — the percentage contribution of each individual measurement to the total variance, used for the ranked bar chart in results.','GUM JCGM 100:2008 §5 — law of propagation of uncertainty')">
+        <rect x="340" y="275" width="220" height="50" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+        <text x="450" y="296" text-anchor="middle" font-family="inherit" font-size="13" font-weight="600" fill="#3C3489">Uncertainty engine</text>
+        <text x="450" y="313" text-anchor="middle" font-family="inherit" font-size="10.5" fill="#534AB7">σ(MUF), LEMUF, Cᵢ values</text>
+      </g>
+
+      <!-- Dashed link between engines -->
+      <g class="node" id="n-link" onclick="show('n-link','MUF ↔ uncertainty engine link','The dashed connector shows these two engines share data — the MUF value from the left is used by the uncertainty engine on the right to compute the significance ratio p = |MUF| / LEMUF. They run in the same calculation pass and outputs are always paired.','IAEA STR-368 — MUF and LEMUF must always be reported together')">
+        <line x1="280" y1="300" x2="340" y2="300" stroke="#534AB7" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect x="280" y="288" width="60" height="24" fill="transparent"/>
+      </g>
+
+      <!-- Merge lines -->
+      <g class="node" id="n-merge" onclick="show('n-merge','Merge: both engines → results','The MUF value and the full uncertainty analysis converge here before being handed to the results display layer. No result is shown until both engines have completed — the system always presents MUF alongside its LEMUF so a value is never shown without its uncertainty context.','IAEA safeguards principle — a MUF value without its uncertainty is meaningless')">
+        <line x1="170" y1="325" x2="170" y2="355" stroke="#888" stroke-width="1.5"/>
+        <line x1="450" y1="325" x2="450" y2="355" stroke="#888" stroke-width="1.5"/>
+        <line x1="170" y1="355" x2="450" y2="355" stroke="#888" stroke-width="1.5"/>
+        <line x1="310" y1="355" x2="310" y2="375" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+        <rect x="240" y="337" width="140" height="30" fill="transparent"/>
+      </g>
+
+      <!-- Results display container -->
+      <rect x="30" y="375" width="560" height="175" rx="10" fill="#F8F8F6" stroke="#aaa" stroke-width="0.6" stroke-dasharray="5 4"/>
+      <text x="310" y="393" text-anchor="middle" font-family="inherit" font-size="10" fill="#888">Results display layer</text>
+
+      <!-- Significance badge -->
+      <g class="node" id="n-sig" onclick="show('n-sig','Significance badge','Displays p = |MUF| / LEMUF as a colour-coded badge. Green (p ≤ 1): MUF is within normal measurement uncertainty — no anomaly. Amber (1 < p ≤ 2): borderline — warrants review. Red (p > 2): MUF exceeds twice the measurement uncertainty — a potential diversion signal requiring inspector follow-up. This is the primary decision output of the system.','IAEA STR-368 §6 — significance test for MUF interpretation')">
+        <rect x="44" y="400" width="166" height="134" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="0.8"/>
+        <text x="127" y="430" text-anchor="middle" font-family="inherit" font-size="12.5" font-weight="600" fill="#712B13">Significance badge</text>
+        <text x="127" y="448" text-anchor="middle" font-family="inherit" font-size="10" fill="#993C1D">p = |MUF| / LEMUF</text>
+        <text x="127" y="464" text-anchor="middle" font-family="inherit" font-size="10" fill="#993C1D">Green / Amber / Red</text>
+      </g>
+
+      <!-- LEMUF decomp -->
+      <g class="node" id="n-lemuf" onclick="show('n-lemuf','LEMUF decomposition','Shows a ranked bar chart of Cᵢ values — the percentage of total variance contributed by each individual measurement (BI, each receipt, each shipment, EI). The tallest bar is the dominant uncertainty source. This tells inspectors and operators exactly which measurement needs better instrumentation or more careful procedure to reduce the overall MUF uncertainty.','GUM §5.1.3 — individual uncertainty contributions; IAEA NMA Handbook §4')">
+        <rect x="227" y="400" width="166" height="134" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.8"/>
+        <text x="310" y="430" text-anchor="middle" font-family="inherit" font-size="12.5" font-weight="600" fill="#633806">LEMUF decomposition</text>
+        <text x="310" y="448" text-anchor="middle" font-family="inherit" font-size="10" fill="#854F0B">Cᵢ per measurement</text>
+        <text x="310" y="464" text-anchor="middle" font-family="inherit" font-size="10" fill="#854F0B">Ranked bar chart</text>
+      </g>
+
+      <!-- Session audit log -->
+      <g class="node" id="n-audit" onclick="show('n-audit','Session audit log','Every calculation run is automatically committed to a persistent SQLite database with full inputs, outputs, timestamp, and operator identity. Stores up to 20 entries in history. This creates a verifiable record for inspector review — a core requirement of IAEA safeguards agreements where operators must demonstrate continuity of knowledge.','IAEA INFCIRC/153 §67 — operators must maintain nuclear material accountancy records')">
+        <rect x="410" y="400" width="166" height="134" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+        <text x="493" y="430" text-anchor="middle" font-family="inherit" font-size="12.5" font-weight="600" fill="#085041">Session audit log</text>
+        <text x="493" y="448" text-anchor="middle" font-family="inherit" font-size="10" fill="#0F6E56">All inputs + results</text>
+        <text x="493" y="464" text-anchor="middle" font-family="inherit" font-size="10" fill="#0F6E56">Auto-committed to DB</text>
+      </g>
+
+      <!-- Arrow to report -->
+      <g class="node" id="n-arr3" onclick="show('n-arr3','Data flow: results → exported report','The complete calculation package — MUF, LEMUF, significance badge, Cᵢ decomposition, diagnostics, and audit metadata — is assembled here and passed to the report generator. The user can trigger this export at any time after a successful calculation.','IAEA INFCIRC/153 §62 — states must submit nuclear material accounting reports')">
+        <line x1="310" y1="550" x2="310" y2="580" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+        <rect x="270" y="552" width="80" height="26" fill="transparent"/>
+      </g>
+
+      <!-- Exported report -->
+      <g class="node" id="n-report" onclick="show('n-report','Exported report','Generates a regulation-ready audit document in HTML or plain-text format containing: facility ID, MBP dates, all input values, MUF and LEMUF with units, significance badge result, full Cᵢ decomposition table, CUSUM trend data if applicable, and the IAEA formula reference. Designed to be submitted directly to safeguards inspectors or used as supporting documentation for physical inventory verification.','IAEA INFCIRC/153 §62 — nuclear material accounting reports (MBRs and ICRs)')">
+        <rect x="185" y="580" width="250" height="50" rx="8" fill="#EAF3DE" stroke="#3B6D11" stroke-width="0.8"/>
+        <text x="310" y="601" text-anchor="middle" font-family="inherit" font-size="13" font-weight="600" fill="#27500A">Exported report</text>
+        <text x="310" y="618" text-anchor="middle" font-family="inherit" font-size="10.5" fill="#3B6D11">HTML / plain-text · inspector-ready audit document</text>
+      </g>
+
+      <!-- Caption -->
+      <text x="310" y="658" text-anchor="middle" font-family="inherit" font-size="10" fill="#aaa">Click any node or connector to see a detailed explanation</text>
+      <text x="310" y="672" text-anchor="middle" font-family="inherit" font-size="9.5" fill="#bbb">Ref: INFCIRC/153 · STR-368 · NMA Handbook 2008 · GUM JCGM 100:2008</text>
+    </svg>
+  </div>
+
+  <div class="sidebar">
+    <div class="info-card" id="info-card">
+      <h2 id="info-title">Click any node to explore</h2>
+      <p id="info-body">Each component in the MUF Calculator plays a specific role in the IAEA safeguards calculation pipeline. Click any box, arrow, or connector to see what it does and how it relates to the rest of the system.</p>
+      <p class="info-ref" id="info-ref"></p>
+    </div>
+
+    <div class="hint">← All nodes and connectors are clickable</div>
+
+    <div style="font-size:11px;font-weight:600;color:#555;margin-top:4px;">Color key</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#E6F1FB;border-color:#185FA5"></div>Data input</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#E1F5EE;border-color:#0F6E56"></div>Processing / validation</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#EEEDFE;border-color:#534AB7"></div>Calculation engines</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#FAECE7;border-color:#993C1D"></div>Significance output</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#FAEEDA;border-color:#854F0B"></div>Uncertainty output</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#EAF3DE;border-color:#3B6D11"></div>Report export</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#FCEBEB;border-color:#A32D2D"></div>Error / block</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  MUF Calculator v1.0 &nbsp;·&nbsp; IAEA INFCIRC/153 Compliant &nbsp;·&nbsp; Tomsk Polytechnic University · School of Nuclear Science and Engineering
+</footer>
+
+<script>
+function show(id, title, body, ref) {
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  document.getElementById('info-title').textContent = title;
+  document.getElementById('info-body').textContent = body;
+  document.getElementById('info-ref').textContent = ref ? 'Ref: ' + ref : '';
+}
+</script>
+</body>
+</html>

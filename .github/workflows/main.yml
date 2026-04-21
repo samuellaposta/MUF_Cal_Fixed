@@ -1,5 +1,4 @@
 name: Build Windows Installer
-
 on:
   push:
     branches: [ main ]
@@ -8,7 +7,6 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,11 +19,6 @@ jobs:
           target: 'desktop'
           arch: 'win64_mingw81'
 
-      - name: Inject feedback token
-        shell: pwsh
-        run: |
-          (Get-Content src\feedbackdialog.cpp) -replace 'PLACEHOLDER_TOKEN', '${{ secrets.FEEDBACK_TOKEN }}' | Set-Content src\feedbackdialog.cpp
-
       - name: Build
         shell: cmd
         run: |
@@ -37,7 +30,7 @@ jobs:
       - name: Deploy Qt dependencies
         shell: pwsh
         run: |
-          $QT = "D:\a\MUF_Cal_Fixed\Qt\5.15.2\mingw81_64"
+          $QT = "$env:Qt5_Dir"
           $libgcc = (Get-ChildItem "C:\" -Recurse -Filter "libgcc_s_seh-1.dll" -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
           $MINGW = Split-Path $libgcc
           New-Item -ItemType Directory -Force -Path deploy\platforms

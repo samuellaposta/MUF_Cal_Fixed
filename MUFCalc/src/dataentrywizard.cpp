@@ -39,6 +39,7 @@ static QLineEdit* makeValidatedField(const QString& ph, int maxLen) {
 
 DataEntryWizard::DataEntryWizard(QWidget* parent) : QDialog(parent) {
     setWindowTitle("MUF Calculator — Data Entry");
+    setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint);
     setMinimumSize(700, 640);
     setStyleSheet(Styles::appStyle() + Styles::lineEditStyle());
     buildUI();
@@ -1384,3 +1385,4 @@ void DataEntryWizard::refreshTableItems(QTableWidget* tbl, bool isInput)
         NuclearTransferItemDB::populateCombo(combo, mat, isInput, prevText);
     }
 }
+

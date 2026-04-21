@@ -79,6 +79,7 @@ QTextBrowser* UserGuideDialog::makeBrowser(const QString& html) {
 // ══════════════════════════════════════════════════════════════════════
 UserGuideDialog::UserGuideDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle("MUF Calculator — Student User Guide");
+    setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint);
     setMinimumSize(1050, 740);
     setStyleSheet(Styles::appStyle() + Styles::lineEditStyle());
     buildUI();
@@ -1278,3 +1279,4 @@ void UserGuideDialog::paintEvent(QPaintEvent* e)
     QPainter p(this);
     IAEAWatermark::paint(p, rect(), 0.15);
 }
+

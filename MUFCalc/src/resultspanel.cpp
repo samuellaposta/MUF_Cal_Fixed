@@ -36,6 +36,7 @@ ResultsPanel::ResultsPanel(const MBPInput& input,
     : QDialog(parent), m_input(input), m_result(result)
 {
     setWindowTitle("MUF Results — Explainable Safeguards Output");
+    setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint);
     setMinimumSize(820, 660);
     setStyleSheet(Styles::appStyle() + Styles::lineEditStyle());
     buildUI();
@@ -393,3 +394,4 @@ void ResultsPanel::paintEvent(QPaintEvent* e)
     QPainter p(this);
     IAEAWatermark::paint(p, rect(), 0.15);
 }
+

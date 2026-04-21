@@ -9,6 +9,7 @@
 
 AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle("About MUF Calculator");
+    setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint);
     setFixedSize(520, 480);
     setStyleSheet(Styles::appStyle() + Styles::lineEditStyle());
 
@@ -83,3 +84,4 @@ void AboutDialog::paintEvent(QPaintEvent* e)
     QPainter p(this);
     IAEAWatermark::paint(p, rect(), 0.15);
 }
+

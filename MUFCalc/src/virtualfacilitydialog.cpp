@@ -641,6 +641,7 @@ void VirtualFacilityDialog::buildFacilities() {
 // ══════════════════════════════════════════════════════════════════════
 VirtualFacilityDialog::VirtualFacilityDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle("Virtual Facility Simulator — NMA Training Module");
+    setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint);
     setMinimumSize(1100, 720);
     setStyleSheet(Styles::appStyle() + Styles::lineEditStyle());
     buildFacilities();
@@ -1305,3 +1306,4 @@ void VirtualFacilityDialog::paintEvent(QPaintEvent* e)
     QPainter p(this);
     IAEAWatermark::paint(p, rect(), 0.15);
 }
+

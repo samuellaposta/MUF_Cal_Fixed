@@ -46,6 +46,7 @@ jobs:
         shell: cmd
         run: |
           choco install innosetup -y
+          copy MUFCalc\resources\MUFCalc.ico MUFCalc.ico
           iscc installer.iss
 
       - name: Upload Installer
@@ -53,3 +54,4 @@ jobs:
         with:
           name: MUFCalc-Installer
           path: Output\MUFCalcSetup.exe
+

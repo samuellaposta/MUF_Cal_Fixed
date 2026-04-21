@@ -4,7 +4,7 @@ AppVersion=1.0
 DefaultDirName={autopf}\MUFCalc
 DefaultGroupName=MUFCalc
 OutputBaseFilename=MUFCalcSetup
-SetupIconFile=MUFCalc\resources\MUFCalc.ico
+SetupIconFile=MUFCalc.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -18,4 +18,5 @@ Name: "{commondesktop}\MUFCalc"; Filename: "{app}\MUFCalc.exe"
 
 [Run]
 Filename: "{app}\MUFCalc.exe"; Description: "Launch MUFCalc"; Flags: nowait postinstall skipifsilent
+
 

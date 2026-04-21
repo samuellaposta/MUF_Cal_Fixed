@@ -715,6 +715,9 @@ void MainWindow::onHistoryClicked(QListWidgetItem* item) {
     m_stack->setCurrentIndex(1);
     ResultsPanel panel(inp, res, this);
     panel.exec();
+}
+
+
 void MainWindow::onShowFlowchart() {
     QString htmlPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/MUFCalc_Flowchart.html";
     QFile res(":/MUFCalc_Flowchart.html");
@@ -725,9 +728,6 @@ void MainWindow::onShowFlowchart() {
     }
     QDesktopServices::openUrl(QUrl::fromLocalFile(htmlPath));
 }
-
-
-
 
 
 

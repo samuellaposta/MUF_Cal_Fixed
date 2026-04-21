@@ -37,6 +37,11 @@ jobs:
           copy "%QTDIR%\bin\Qt5Gui.dll" deploy\
           copy "%QTDIR%\bin\Qt5Widgets.dll" deploy\
           copy "%QTDIR%\bin\Qt5Network.dll" deploy\
+          copy "%QTDIR%\bin\Qt5WebEngineWidgets.dll" deploy\
+          copy "%QTDIR%\bin\Qt5WebEngineCore.dll" deploy\
+          copy "%QTDIR%\bin\Qt5WebChannel.dll" deploy\
+          copy "%QTDIR%\bin\Qt5Positioning.dll" deploy\
+          copy "%QTDIR%\bin\Qt5PrintSupport.dll" deploy\
           copy "%QTDIR%\plugins\platforms\qwindows.dll" deploy\platforms\
           copy "%QTDIR%\bin\libgcc_s_seh-1.dll" deploy\
           copy "%QTDIR%\bin\libstdc++-6.dll" deploy\
@@ -54,4 +59,5 @@ jobs:
         with:
           name: MUFCalc-Installer
           path: Output\MUFCalcSetup.exe
+
 

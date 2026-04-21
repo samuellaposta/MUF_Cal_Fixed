@@ -36,13 +36,13 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 // ─────────────────────────────────────────────────────────────────
 void MainWindow::buildMenuBar() {
     auto* mFile = menuBar()->addMenu("&File");
-    mFile->addAction("&New Calculation",  QKeySequence::New,  this, &MainWindow::onNewCalculation);
-    mFile->addAction("Load &Example",                         this, &MainWindow::onLoadExample);
+    QAction *actNew = mFile->addAction("&New Calculation", this, &MainWindow::onNewCalculation);
+    actNew->setShortcut(QKeySequence::New);
     mFile->addSeparator();
     mFile->addAction("E&xport Report",                        this, &MainWindow::onExportReport);
     mFile->addSeparator();
-    mFile->addAction("E&xit",             QKeySequence::Quit, this, &QWidget::close);
-
+    QAction *actExit = mFile->addAction("E&xit", this, &QWidget::close);
+    actExit->setShortcut(QKeySequence::Quit);
     auto* mCalc = menuBar()->addMenu("&Calculate");
     mCalc->addAction("▶  New Calculation", this, &MainWindow::onNewCalculation);
     mCalc->addAction("Load Example Data",  this, &MainWindow::onLoadExample);

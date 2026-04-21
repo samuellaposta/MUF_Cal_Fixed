@@ -638,7 +638,7 @@ Action: Routine accountancy report only. Monitor next MBP.
 )"});
 
     m_totalLessons = m_lessons.size();
-    m_completed.resize(m_totalLessons, false);
+    m_completed.fill(false, m_totalLessons);
 }
 
 QWidget* UserGuideDialog::buildInteractiveTutorial() {
